@@ -14,6 +14,8 @@ app = Flask(__name__)
 @app.route('/')
 def index():    return render_template('index.html')
 
+r = requests.get("https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.json")
+d = json.loads(r.text)
 
 @app.route('/chart1')
 def chart1():
@@ -35,8 +37,6 @@ def chart1():
 
 @app.route('/chart2')
 def chart2():
-    r = requests.get("https://presidentielle2022.conseil-constitutionnel.fr/telechargement/parrainagestotal.json")
-    d = json.loads(r.text)
     #chargement des fichiers dans les dataframes
     pt_origin = pd.DataFrame(d)
     rf = pd.read_csv('repart_femme_ok.csv')
@@ -57,7 +57,7 @@ def chart2():
     pt_test_new_way = pt_test_new_way[["Candidat","Civilite","total_civi_mandat","transco_mandat","Partdhommes"]]
     #on supprime les doublons
     pt_test_new_way = pt_test_new_way.drop_duplicates(subset = ["Candidat","Civilite","total_civi_mandat","transco_mandat","Partdhommes"])
-    mes_figues = []
+
     for Candidat,group in pt_test_new_way.sort_values(by="Partdhommes",ascending=False).groupby(["Candidat"]):
         monsieur=group.query('Civilite=="M."')
         mme=group.query('Civilite=="Mme"')
@@ -82,12 +82,12 @@ def chart2():
         fig.update_layout(
             title_text=Candidat+"| Nombre total de parrainages:"+str(int(group["total_civi_mandat"].sum()))
         )
-        mes_figues.append(fig)
-    graphJSON = json.dumps(mes_figues, cls=plotly.utils.PlotlyJSONEncoder)
-    header="Répartition H/F et comparaison avec la réalité"
-    description = """
-    entrerdescription ici.
-        """   
+
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        header="Répartition H/F et comparaison avec la réalité"
+        description = """
+        entrerdescription ici.
+            """   
     return render_template('notdash2.html', graphJSON=graphJSON, header=header,description=description)
 
 
